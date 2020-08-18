@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.haobrother.top","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="自从工作以来我发现一直离不开的一个技术是JS异步编程，回调函数是其中最为经典的一种实现方式，这已经在许多经典Web API（XHR等）中使用过，而在使用Promise和async&#x2F;await过程中感觉自己对里面的一些概念还是模糊不清，导致使用起来不够得心应手，写出来的代码更是凌乱，现在趁有空赶紧从网络上搜集相关资料学习一番，然后记录下自己的理解。 同步与异步要理解异步编程，首先得搞清楚它的对立面—">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JS异步编程">
+<meta property="og:url" content="http://www.haobrother.top/js-async-program/index.html">
+<meta property="og:site_name" content="豪阁的博客">
+<meta property="og:description" content="自从工作以来我发现一直离不开的一个技术是JS异步编程，回调函数是其中最为经典的一种实现方式，这已经在许多经典Web API（XHR等）中使用过，而在使用Promise和async&#x2F;await过程中感觉自己对里面的一些概念还是模糊不清，导致使用起来不够得心应手，写出来的代码更是凌乱，现在趁有空赶紧从网络上搜集相关资料学习一番，然后记录下自己的理解。 同步与异步要理解异步编程，首先得搞清楚它的对立面—">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://mdn.mozillademos.org/files/8633/promises.png">
+<meta property="article:published_time" content="2020-04-12T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-08-08T15:47:55.443Z">
+<meta property="article:author" content="豪阁">
+<meta property="article:tag" content="HTML，CSS，JS，Vue,React,React Native,Node.js">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://mdn.mozillademos.org/files/8633/promises.png">
+
+<link rel="canonical" href="http://www.haobrother.top/js-async-program/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>JS异步编程 | 豪阁的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">豪阁的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">不要哀求，学会争取，若是如此，终有所获。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.haobrother.top/js-async-program/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="豪阁">
+      <meta itemprop="description" content="专注于前端开发">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="豪阁的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JS异步编程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-13 00:00:00" itemprop="dateCreated datePublished" datetime="2020-04-13T00:00:00+08:00">2020-04-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-08 23:47:55" itemprop="dateModified" datetime="2020-08-08T23:47:55+08:00">2020-08-08</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>自从工作以来我发现一直离不开的一个技术是JS异步编程，回调函数是其中最为经典的一种实现方式，这已经在许多经典Web API（XHR等）中使用过，而在使用Promise和async/await过程中感觉自己对里面的一些概念还是模糊不清，导致使用起来不够得心应手，写出来的代码更是凌乱，现在趁有空赶紧从网络上搜集相关资料学习一番，然后记录下自己的理解。</p>
+<h2 id="同步与异步"><a href="#同步与异步" class="headerlink" title="同步与异步"></a>同步与异步</h2><p>要理解异步编程，首先得搞清楚它的对立面——<strong>同步</strong>，这是我们写得最多的一种代码，利用这种方式写代码非常符合直觉，一步接着一步地完成计算、操作，最后得出结果。但不可否认的是，总会有一些代码不会那么快完成，或者它们必须达到某种条件才能够执行，如果这类代码运行的话，由于长时间还没有把代码控制权交还给浏览器会导致页面“假死”（什么都操作不了），也就是<strong>阻塞</strong>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">    ctx.fillStyle = <span class="string">&#x27;rgba(0,0,255, 0.2)&#x27;</span>;</span><br><span class="line">    ctx.beginPath();</span><br><span class="line">    ctx.arc(random(<span class="number">0</span>, canvas.width), random(<span class="number">0</span>, canvas.height), <span class="number">10</span>, degToRad(<span class="number">0</span>), degToRad(<span class="number">360</span>), <span class="literal">false</span>);</span><br><span class="line">    ctx.fill()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">alert(<span class="string">&#x27;按下！&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码的for循环是一个耗时的绘制操作，它会导致后面的alert提示中的<code>按下！</code>不会立即弹出，而是会等待前面的耗时代码执行完成之后才会弹出，因为这时两者是同步执行的。</p>
+<h3 id="JS是单线程"><a href="#JS是单线程" class="headerlink" title="JS是单线程"></a>JS是单线程</h3><p>为什么会这样呢？明明我的PC使用的是多核CPU，但这些代码却不能分别同时执行？</p>
+<p>因为Javascript设计上就单线程，即使有多个CPU内核，它也只能运行在单一线程上执行代码，这个线程成为主线程，现代Javascript为了解决这个问题提供了两种解决方案：异步编程和Web workers。</p>
+<p>Web workers一般用于密集运算，但不能涉及DOM操作，所以不能直接更新UI是它的主要限制，其次worker里面的代码也是同步的，如果有一个函数依赖于几个在它之前运行的过程的结果，那么这样会出现问题：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">主线程: 任务A --&gt; 任务B</span><br></pre></td></tr></table></figure>
+
+<p>假设任务A正在从服务器获取图片，然后任务B需要对这个图片进行某种操作，如果这是在主线程中执行的同步代码的话肯定会出错，因为任务A不是一个立即就能完成的操作（请求服务器并响应处理需要一定的时间），而这个时候任务B立即进行执行会以为操作一个空对象而失败。</p>
+<p>为了解决这类问题，我们需要另外一种方式——异步代码。没错，<strong>异步代码就是用来解决JS单线程执行同步代码时会遇到阻塞的问题</strong>，对于这类情况，我们可以使用异步编程！</p>
+<p>使用异步编程可以让我们的某些任务在之后某个时间点才执行：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">主线程:     任务A                    任务B</span><br><span class="line">Promise:      |_______ 异步操作 ______|</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="编写异步JS代码"><a href="#编写异步JS代码" class="headerlink" title="编写异步JS代码"></a>编写异步JS代码</h2><p>总的来说有两类异步代码编写方式，分别为<strong>Callback</strong>（回调函数）和<strong>Promise</strong>。</p>
+<h3 id="Callback"><a href="#Callback" class="headerlink" title="Callback"></a>Callback</h3><p>对于回调函数，大多数人都很熟悉，因为无论是老式异步请求XHR中onload属性，还是浏览器DOM事件绑定方法addEventListener都是使用回调函数来实现异步代码执行：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">btn.addEventListener(<span class="string">&#x27;click&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  alert(<span class="string">&#x27;按下！&#x27;</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>这里的箭头函数就是一个<strong>异步回调函数</strong>，值得注意的是，不是所有回调函数都是异步的，因为有这些例外：Array.prototype.forEach()、Array.prototype.map()等，它们的参数都是传入一个同步执行的回调函数。</p>
+<p>对于异步回调，除了原有的Web API提供之外，也可以自己封装一个：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">loadAsset</span>(<span class="params">url, type, callback</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> xhr = <span class="keyword">new</span> XMLHttpRequest();</span><br><span class="line">  xhr.open(<span class="string">&#x27;GET&#x27;</span>, url);</span><br><span class="line">  xhr.responseType = type;</span><br><span class="line"></span><br><span class="line">  xhr.onload = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    callback(xhr.response);</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  xhr.send();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">displayImage</span>(<span class="params">blob</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> objectURL = URL.createObjectURL(blob);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> image = <span class="built_in">document</span>.createElement(<span class="string">&#x27;img&#x27;</span>);</span><br><span class="line">  image.src = objectURL;</span><br><span class="line">  <span class="built_in">document</span>.body.appendChild(image);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">loadAsset(<span class="string">&#x27;coffee.jpg&#x27;</span>, <span class="string">&#x27;blob&#x27;</span>, displayImage);</span><br></pre></td></tr></table></figure>
+
+<p>这里的loadAsset就是一个封装了XHR请求图片的异步回调API，而<code>displayImage</code>就是异步回调函数，它在等待图片响应并返回到客户端后执行处理。</p>
+<h3 id="Promise"><a href="#Promise" class="headerlink" title="Promise"></a>Promise</h3><p>Promise是现在JS中的主流异步编程方式。根据字面意思，Promise定义了一个承诺，它承诺要做一件事，而这件事不会立即就完成，但做完这件事之后会通知你，结果可能是成功或失败。</p>
+<p>语法原型如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>( <span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;...&#125; <span class="comment">/* executor */</span>  );</span><br></pre></td></tr></table></figure>
+
+<p>可以看到传给Promise的是一个叫executor的函数，也叫执行函数，这个函数就是承诺会做的事，但它可能不会立即就完成，但是会在完成后通知你，怎么通知呢？通过执行函数的两个参数resolve和reject来通知，而这两个都是函数，resolve用来在承诺完成后将承诺状态修改为fulfilled（完成），而reject用来在承诺失败后拒绝并给出reason（原因），以便后续进行不同的处理。任何一个承诺都可以通过后接一个then方法，以传达在其fulfilled（完成）或者rejected（拒绝）后需要进行什么样的处理。then方法有两个参数，一个是完成后执行的函数onFulfillment，另一个是拒绝后执行的onRejection，两者都有一个参数用来分别接收来自resolve和reject的参数。另外，catch方法也可以代替onRejection来捕获并处理Promise上的错误。</p>
+<p>一个Promise的处理流程：</p>
+<p><img src="https://mdn.mozillademos.org/files/8633/promises.png" alt="img"></p>
+<p>从上图可以看到，一开始Promise的状态为pendding，等执行函数处理完后可能变为fulfilled（settled）或者rejected。Promise可以随时后接then来对结果进行后续处理，还可以在then方法后面继续接then或catch方法，因为then/catch方法返回的也是一个Promise，所以Promise可以进行链式调用，并使得异步操作一个接一个地进行；另外catch除了能够捕获整条链前面的错误，也可以在处理完错误之后接then继续执行异步任务。</p>
+<p>下面是一个Promise示例：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> myFirstPromise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//当异步代码执行成功时，我们才会调用resolve(...), 当异步代码失败时就会调用reject(...)</span></span><br><span class="line">    <span class="comment">//在本例中，我们使用setTimeout(...)来模拟异步代码，实际编码时可能是XHR请求或是HTML5的一些API方法.</span></span><br><span class="line">    <span class="built_in">setTimeout</span>(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        resolve(<span class="string">&quot;成功!&quot;</span>); <span class="comment">//代码正常执行！</span></span><br><span class="line">    &#125;, <span class="number">250</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">myFirstPromise.then(<span class="function"><span class="keyword">function</span>(<span class="params">successMessage</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//successMessage的值是上面调用resolve(...)方法传入的值.</span></span><br><span class="line">    <span class="comment">//successMessage参数不一定非要是字符串类型，这里只是举个例子</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&quot;Yay! &quot;</span> + successMessage);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>上面的方法是当我们需要自己生成Promise时使用的方法，而大多时候使用WebAPI或者第三方库的异步函数本身就返回Promise，那么可以像这样：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">doSomething().then(<span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> doSomethingElse(result);</span><br><span class="line">&#125;)</span><br><span class="line">.then(<span class="function"><span class="keyword">function</span>(<span class="params">newResult</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> doThirdThing(newResult);</span><br><span class="line">&#125;)</span><br><span class="line">.then(<span class="function"><span class="keyword">function</span>(<span class="params">finalResult</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;最终结果: &#x27;</span> + finalResult);</span><br><span class="line">&#125;)</span><br><span class="line">.catch(failureCallback);</span><br></pre></td></tr></table></figure>
+
+<p>另外，Promise还有一些实用的静态方法：</p>
+<ul>
+<li><code>Promise.all</code>方法，可以同时执行多个承诺并等他们都完成后返回它们的结果数组，或者任意一个承诺失败会立即拒绝它并返回reason。</li>
+<li><code>Promise.race</code>，可以同时执行执行多个承诺并只要有一个完成后返回它的结果，或者任意一个承诺失败会立即拒绝它并返回reason。</li>
+<li><code>Promise.resolve(value)</code>，根据value值来处理返回值，如果value是一个Promise，则直接返回该Promise；如果value是一个含有thenable对象（含有then方法），则返回一个fulfilled的Promise对象，并且其then方法的参数为这个thenable对象的then返回值；所有其他value值直接返回一个fulfilled的Promise对象且后接的then方法中的onFulfilled参数为该value值。</li>
+<li><code>Promise.reject(reason)</code>，返回一个状态为被拒绝的Promise，并将给定的失败原因reason传递给对应的处理方法（catch）</li>
+</ul>
+<h3 id="async-await"><a href="#async-await" class="headerlink" title="async/await"></a>async/await</h3><p>对于熟悉了Promise的童鞋一定会认为链式调用已经够爽了，但是其实还有一种更加舒服的写法，那就是aysnc/await，async和await关键字属于ES7的新语法，可以让你像编写同步代码那样编写异步代码！</p>
+<p>首先要将一个普通函数声明为异步函数，在function前添加async：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">hello</span>(<span class="params"></span>) </span>&#123; <span class="keyword">return</span> <span class="string">&quot;Hello&quot;</span> &#125;;</span><br><span class="line">hello();</span><br></pre></td></tr></table></figure>
+
+<p>这里的hello函数调用返回了一个Promise，而不是”Hello”字符串，也就是说本质上的async函数就是封装了一个Promise。</p>
+<p>只要一个函数声明为async函数那么就可以使用await来用“暂停”代码！现在，hello函数里面可以使用await关键字来处理任意的异步操作，也就是将await放在返回Promise的函数前面，当代码执行到该行就会暂停下来等待，直到该Promise的异步操作完成再继续执行下一行：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">myFetch</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> response = <span class="keyword">await</span> fetch(<span class="string">&#x27;coffee.jpg&#x27;</span>);</span><br><span class="line">  <span class="keyword">let</span> myBlob = <span class="keyword">await</span> response.blob();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> objectURL = URL.createObjectURL(myBlob);</span><br><span class="line">  <span class="keyword">let</span> image = <span class="built_in">document</span>.createElement(<span class="string">&#x27;img&#x27;</span>);</span><br><span class="line">  image.src = objectURL;</span><br><span class="line">  <span class="built_in">document</span>.body.appendChild(image);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">myFetch()</span><br><span class="line">.catch(<span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;出错了: &#x27;</span> + e.message);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>注意的是，只有声明为async的异步函数里面才可以使用await关键字，普通函数不能使用！</p>
+<h4 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h4><p>捕获错误的话可以在async函数里使用try…catch语句。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">myFetch</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> response = <span class="keyword">await</span> fetch(<span class="string">&#x27;coffee.jpg&#x27;</span>);</span><br><span class="line">    <span class="keyword">let</span> myBlob = <span class="keyword">await</span> response.blob();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> objectURL = URL.createObjectURL(myBlob);</span><br><span class="line">    <span class="keyword">let</span> image = <span class="built_in">document</span>.createElement(<span class="string">&#x27;img&#x27;</span>);</span><br><span class="line">    image.src = objectURL;</span><br><span class="line">    <span class="built_in">document</span>.body.appendChild(image);</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">myFetch();</span><br></pre></td></tr></table></figure>
+
+<p>但因为异步函数的本质也是返回一个Promise，可以直接在其后接catch块：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">myFetch</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> response = <span class="keyword">await</span> fetch(<span class="string">&#x27;coffee.jpg&#x27;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">await</span> response.blob();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">myFetch().then(<span class="function">(<span class="params">blob</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> objectURL = URL.createObjectURL(blob);</span><br><span class="line">  <span class="keyword">let</span> image = <span class="built_in">document</span>.createElement(<span class="string">&#x27;img&#x27;</span>);</span><br><span class="line">  image.src = objectURL;</span><br><span class="line">  <span class="built_in">document</span>.body.appendChild(image);</span><br><span class="line">&#125;)</span><br><span class="line">.catch(<span class="function">(<span class="params">e</span>) =&gt;</span></span><br><span class="line">  <span class="built_in">console</span>.log(e)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h4 id="async-await的缺陷"><a href="#async-await的缺陷" class="headerlink" title="async/await的缺陷"></a>async/await的缺陷</h4><p>大量await可能会阻塞代码：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">timeoutPromise</span>(<span class="params">interval</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">setTimeout</span>(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">      resolve(<span class="string">&quot;完成&quot;</span>);</span><br><span class="line">    &#125;, interval);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">timeTest</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">await</span> timeoutPromise(<span class="number">3000</span>);</span><br><span class="line">  <span class="keyword">await</span> timeoutPromise(<span class="number">3000</span>);</span><br><span class="line">  <span class="keyword">await</span> timeoutPromise(<span class="number">3000</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> startTime = <span class="built_in">Date</span>.now();</span><br><span class="line">timeTest().then(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> finishTime = <span class="built_in">Date</span>.now();</span><br><span class="line">  <span class="keyword">let</span> timeTaken = finishTime - startTime;</span><br><span class="line">  alert(<span class="string">&quot;耗时（ms）: &quot;</span> + timeTaken);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>上面代码会弹出“耗时（ms）：9000”（也许会有误差几毫秒）</p>
+<p>而你实际上可能想要同时开始多个异步操作，有一个办法可以做到：定义多个变量来存储多个异步Promise：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">timeoutPromise</span>(<span class="params">interval</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">setTimeout</span>(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">      resolve(<span class="string">&quot;完成&quot;</span>);</span><br><span class="line">    &#125;, interval);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">timeTest</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> timeoutPromise1 = timeoutPromise(<span class="number">3000</span>);</span><br><span class="line">  <span class="keyword">const</span> timeoutPromise2 = timeoutPromise(<span class="number">3000</span>);</span><br><span class="line">  <span class="keyword">const</span> timeoutPromise3 = timeoutPromise(<span class="number">3000</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">await</span> timeoutPromise1;</span><br><span class="line">  <span class="keyword">await</span> timeoutPromise2;</span><br><span class="line">  <span class="keyword">await</span> timeoutPromise3;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> startTime = <span class="built_in">Date</span>.now();</span><br><span class="line">timeTest().then(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> finishTime = <span class="built_in">Date</span>.now();</span><br><span class="line">  <span class="keyword">let</span> timeTaken = finishTime - startTime;</span><br><span class="line">  alert(<span class="string">&quot;耗时（ms）: &quot;</span> + timeTaken);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>经过改良，上面代码会弹出“耗时（ms）：3000”（也许会有误差几毫秒）</p>
+<p>另外，不能在非async函数内或者代码的顶级上下文使用await关键字，因此需要创建额外的函数，略有麻烦，但是一般都是值得的。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>豪阁
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.haobrother.top/js-async-program/" title="JS异步编程">http://www.haobrother.top/js-async-program/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/npm-user-guide/" rel="next" title="npm使用指南">
+      npm使用指南 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E4%B8%8E%E5%BC%82%E6%AD%A5"><span class="nav-number">1.</span> <span class="nav-text">同步与异步</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JS%E6%98%AF%E5%8D%95%E7%BA%BF%E7%A8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">JS是单线程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E5%BC%82%E6%AD%A5JS%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">编写异步JS代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Callback"><span class="nav-number">2.1.</span> <span class="nav-text">Callback</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Promise"><span class="nav-number">2.2.</span> <span class="nav-text">Promise</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#async-await"><span class="nav-number">2.3.</span> <span class="nav-text">async&#x2F;await</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="nav-number">2.3.1.</span> <span class="nav-text">错误处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#async-await%E7%9A%84%E7%BC%BA%E9%99%B7"><span class="nav-number">2.3.2.</span> <span class="nav-text">async&#x2F;await的缺陷</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">豪阁</p>
+  <div class="site-description" itemprop="description">专注于前端开发</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">豪阁</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
