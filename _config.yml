@@ -133,3 +133,6 @@ deploy:
   type: git
   repo: https://github.com/haobrother/haobrother.github.io
   branch: gh-pages
+  type: git
+  repo: MyBlog:~/blog-repo.git
+  branch: master
