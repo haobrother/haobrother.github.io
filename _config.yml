@@ -10,13 +10,6 @@ keywords: HTML，CSS，JS，Vue,React,React Native,Node.js
 author: 豪阁
 language: zh-CN
 timezone: 'Asia/Shanghai'
-favicon:
-  small: /images/favicon-16x16-next.png
-  medium: /images/favicon-32x32-next.png
-  apple_touch_icon: /images/apple-touch-icon-next.png
-  safari_pinned_tab: 
-  android_manifest: /images/manifest.json
-  ms_browserconfig: /images/browserconfig.xml
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
@@ -107,6 +100,13 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: next
 theme_config:
+  favicon:
+    small: /images/favicon-16x16-next.png
+    medium: /images/favicon-32x32-next.png
+    apple_touch_icon: /images/apple-touch-icon-next.png
+    #safari_pinned_tab: 
+    #android_manifest: /images/manifest.json
+    #ms_browserconfig: /images/browserconfig.xml
   scheme: Muse
   #scheme: Mist
   #scheme: Pisces
